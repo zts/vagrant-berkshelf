@@ -48,7 +48,6 @@ module Berkshelf
             # by Vagrant.
             real_shelf = env[:berkshelf].shelf
             tmp_shelf = "#{real_shelf}-tmp"
-#            FileUtils.rm_rf(env[:berkshelf].shelf)
 
             opts = env[:machine].config.berkshelf.to_hash.symbolize_keys
             env[:berkshelf].berksfile.vendor(tmp_shelf, opts)
