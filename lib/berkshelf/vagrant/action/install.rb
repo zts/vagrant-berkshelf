@@ -40,10 +40,21 @@ module Berkshelf
           def install(env)
             check_vagrant_version(env)
             env[:berkshelf].ui.info "Updating Vagrant's berkshelf: '#{env[:berkshelf].shelf}'"
-            FileUtils.rm_rf(env[:berkshelf].shelf)
+            # https://github.com/berkshelf/vagrant-berkshelf/issues/88
+            # Some of Vagrant's folder sharing methods die when the
+            # shared folder is deleted and recreated, as Berkshelf
+            # does.  To work around this, we install to a temporary
+            # location, then use rsync to update the directory shared
+            # by Vagrant.
+            real_shelf = env[:berkshelf].shelf
+            tmp_shelf = "#{real_shelf}-tmp"
+#            FileUtils.rm_rf(env[:berkshelf].shelf)
 
             opts = env[:machine].config.berkshelf.to_hash.symbolize_keys
-            env[:berkshelf].berksfile.vendor(env[:berkshelf].shelf, opts)
+            env[:berkshelf].berksfile.vendor(tmp_shelf, opts)
+
+            system("rsync -aW --delete #{tmp_shelf}/. #{real_shelf}/.")
+            FileUtils.rm_rf(tmp_shelf)
           end
 
           def warn_disabled_but_berksfile_exists(env)
